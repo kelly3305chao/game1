@@ -72,7 +72,7 @@
     let currentBatteryLevel = 100;
     let realHour = new Date().getHours(); 
     let isGameOver = false; 
-    let isMonitorActive = false; // ⚡ 修正：新增監聽啟動開關（進入核心遊戲前，不觸發分頁懲罰，防止 iPad 鍵盤收起誤判）
+    let isMonitorActive = false; // ⚡ 核心：防逃跑開關
     let ritualTimer = null;
 
     // ----- ⚡ 全方位逃跑抓包監聽核心 -----
@@ -221,7 +221,7 @@
             return;
         }
 
-        // ⚡ 修正：在確認送出時間、準備進入核心劇本時，才正式啟動防逃跑抓包系統，完美解決 iPad 縮小鍵盤造成的 blur 誤判
+        // 正式開啟防逃跑抓包監聽
         startGlobalEscapeMonitor();
 
         if (inputVal !== realHour) {
@@ -259,19 +259,27 @@
         `;
     }
 
+    // ⚡ 修正核心：當呼叫 iPhone 系統權限通知時，暫時例外、關閉監聽
     function requestPermissionAndStart() {
+        // 第一步：先暫時關閉防逃跑監聽，任由 iOS 系統跳窗
+        isMonitorActive = false; 
+
         if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
             DeviceOrientationEvent.requestPermission()
                 .then(permissionState => {
-                    if (permissionState === 'granted') {
+                    // 第二步：不論允許或拒絕，都回到網頁了。稍作延遲確保畫面回穩，再重啟監聽
+                    setTimeout(() => {
+                        isMonitorActive = true; 
                         startFlipRitual();
-                    } else {
-                        alert("遊戲需要動態感應器權限才能驗證你的翻轉動作！");
-                        startFlipRitual(); 
-                    }
+                    }, 300);
                 })
-                .catch(console.error);
+                .catch(err => {
+                    console.error(err);
+                    setTimeout(() => { isMonitorActive = true; startFlipRitual(); }, 300);
+                });
         } else {
+            // Android 或 PC 瀏覽器，直接重啟並進入
+            isMonitorActive = true;
             startFlipRitual();
         }
     }
@@ -297,7 +305,6 @@
         let isFlippedCorrectly = false;
 
         function handleOrientation(event) {
-            // 如果已經進入終局判定，立刻拒絕後續高頻感應器數據，防止卡死
             if (timeLeft <= 0 || isGameOver) return;
 
             let beta = event.beta || 0; 
@@ -324,7 +331,6 @@
 
             if (timeLeft <= 0) {
                 clearInterval(ritualTimer);
-                // ⚡ 修正：時間一到的第一時間，在渲染畫面前「立刻移除監聽器」，徹底根除高頻率運算下的當機（卡死）Bug
                 window.removeEventListener('deviceorientation', handleOrientation);
                 
                 if (isFlippedCorrectly) {
@@ -339,7 +345,7 @@
     // 階段三：結局渲染
     function showRitualResult(success) {
         isGameOver = true; 
-        isMonitorActive = false; // 鎖定結局，不再觸發分頁懲罰
+        isMonitorActive = false; // 鎖定結局
 
         const container = document.getElementById('main-container');
         container.classList.remove('ritual-screen');
