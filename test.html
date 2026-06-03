@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-select=no">
+    <title>⚡ 時空流速機關 ⚡</title>
+    <style>
+        body {
+            background-color: #050505;
+            color: #e0e0e0;
+            font-family: sans-serif;
+            text-align: center;
+            padding: 40px 20px;
+        }
+        .container {
+            margin: 50px auto;
+            width: 280px;
+            height: 280px;
+            background: #111;
+            border: 2px solid #333;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0,255,200,0.1);
+        }
+        /* 核心謎題字體 */
+        #secret-core {
+            font-size: 48px;
+            font-weight: bold;
+            letter-spacing: 5px;
+            transition: color 0.1s;
+        }
+        .hint {
+            color: #888;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>⏳ 扭曲的時空矩陣 </h2>
+    <p class="hint">
+        「這裡的流速太快了，肉眼無法捕捉。<br>
+        唯有讓你的核心**進入低能耗狀態**，時空才會慢下來...」
+    </p>
+
+    <div class="container">
+        <div id="secret-core">WAIT</div>
+    </div>
+
+    <p class="hint" style="margin-top: 30px;">
+        💡 提示：試著滑開手機控制中心，**開啟「省電模式」**（低電量模式）再回來看看。
+    </p>
+
+    <script>
+        const secretEl = document.getElementById('secret-core');
+        let frameCount = 0;
+
+        // 這個函式會隨著手機螢幕的每一次刷新（Refresh）執行一次
+        function updateTimeline() {
+            frameCount++;
+
+            // 核心魔術：利用畫面的格數（Frame）做切換
+            // 每 2 格切換一次狀態
+            if (frameCount % 2 === 0) {
+                // 狀態 A：顯示真正的密碼，並用顯眼的螢光綠
+                secretEl.innerText = "OPEN";
+                secretEl.style.color = "#00ffcc";
+            } else {
+                // 狀態 B：顯示干擾字，並用一模一樣的顏色
+                secretEl.innerText = "X X X";
+                secretEl.style.color = "#00ffcc";
+            }
+
+            // 不斷循環執行
+            requestAnimationFrame(updateTimeline);
+        }
+
+        // 啟動動畫
+        requestAnimationFrame(updateTimeline);
+    </script>
+
+</body>
+</html>
