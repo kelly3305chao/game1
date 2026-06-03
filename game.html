@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>深紅王府：十四日祭（真相審判版）</title>
+    <title>深紅王府：十四日祭（終極審判版）</title>
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { 
@@ -39,12 +39,14 @@
         @keyframes glitchAnim { 0% { transform: translate(1px, 1px); } 50% { transform: translate(-1px, -1px); } 100% { transform: translate(0, 1px); } }
         
         /* 畫面劇烈搖晃特效 */
-        .scary-shake { animation: screenShake 0.1s infinite;animation-iteration-count: 5; background-color: #300 !important; }
+        .scary-shake { animation: screenShake 0.1s infinite; animation-iteration-count: 5; background-color: #300 !important; }
         @keyframes screenShake { 0% { transform: translate(2px, 2px); } 50% { transform: translate(-2px, -2px); } 100% { transform: translate(1px, -1px); } }
 
-        /* 儀式黑屏特效 */
+        /* 儀式與結局畫面特效 */
         .ritual-screen { background-color: #000 !important; color: #ff3333 !important; text-align: center; justify-content: center; }
+        .death-screen { background-color: #400 !important; color: #fff !important; animation: screenShake 0.05s infinite;animation-iteration-count: 10; }
         #countdown { font-size: 60px; font-weight: bold; margin: 20px 0; color: #ff0000; }
+        #orientationDisplay { font-family: monospace; font-size: 13px; color: #00ff00; background: #222; padding: 8px; border-radius: 4px; margin-top: 15px; display: inline-block; }
     </style>
 </head>
 <body>
@@ -59,7 +61,7 @@
 
     <div class="game-text" id="content-box">
         【⚠️ 因果律檢測：連結前置審判】
-        在進入大乾王朝的深紅王府之前，邪神需要確認你目前现实肉身所在的空間維度。
+        在進入大乾王朝的深紅王府之前，邪神需要確認你目前現實肉身所在的空間維度。
 
         這不是開玩笑，請如實回答以下問題。你的每一次點擊，都在向螢幕彼端的不可名狀之物奉獻靈魂。
     </div>
@@ -71,7 +73,17 @@
 
 <script>
     let currentBatteryLevel = 100;
-    let realHour = new Date().getHours(); // 抓取現實精確小時 (2026年即時時間)
+    let realHour = new Date().getHours(); 
+    let isGameOver = false; // 用來標記是否已經進入結局，防止重複觸發分頁懲罰
+    let ritualTimer = null;
+
+    // 全域監聽：任何時間只要跳出分頁或切換畫面，回來直接進分頁觸殺結局
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden && !isGameOver) {
+            // 玩家在遊戲進行中切走了！
+            triggerTabEscapePunishment();
+        }
+    });
 
     // 讀取真實電量
     if (navigator.getBattery) {
@@ -83,18 +95,48 @@
         });
     }
 
-    // 獲取網頁底層偵測的網路狀態
+    // 獲取網絡狀態
     function getRealNetworkType() {
         if (!navigator.onLine) return "offline";
         const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
         if (conn) {
             if (conn.type === 'wifi' || conn.effectiveType === '4g') {
-                // 這裡做一個偏向常規網速的模糊判定
                 return conn.saveData ? "cellular" : "wifi";
             }
             return "cellular";
         }
-        return "wifi"; // 預設
+        return "wifi"; 
+    }
+
+    // ==================== 全域分頁切換觸殺結局 ====================
+    function triggerTabEscapePunishment() {
+        isGameOver = true;
+        if (ritualTimer) clearInterval(ritualTimer); // 清除可能正在執行的倒數計時
+
+        const container = document.getElementById('main-container');
+        document.getElementById('status-area').style.display = 'none';
+        document.getElementById('game-title').style.display = 'none';
+        
+        container.classList.remove('ritual-screen');
+        container.classList.add('death-screen');
+        
+        container.innerHTML = `
+            <h1 style="color:#fff; text-shadow: 0 0 10px #f00;">❌ 【結局：魂飛魄散】</h1>
+            <div class="game-text" style="color:#fff; margin-top:20px;">
+                說了不准離開！！！！！
+                
+                你剛剛把視窗縮小、或是切換去別的畫面了吧？
+                
+                邪神早就警告過你，你的每一次點擊都在向牠奉獻靈魂。在因果律陣法啟動期間，你竟然企圖藉由逃離瀏覽器分頁來規避審判。
+                
+                在你切回畫面的這一秒，大乾王府的索命厲鬼已經順著中斷的數據流，硬生生扯碎了你的靈魂。
+                
+                你現實中的肉身還坐在這裡，但你的意識，已經被永遠關在剛才那個被你關掉的黑暗維度裡了。
+            </div>
+            <div class="options-container">
+                <button class="btn" style="text-align:center; background-color: #f00; color:#000; font-weight:bold;" onclick="window.location.reload()">【靈魂已碎，從頭來過】</button>
+            </div>
+        `;
     }
 
     // ==================== 第一題：網路環境測謊 ====================
@@ -120,30 +162,13 @@
         const btnBox = document.getElementById('btn-box');
         const body = document.body;
 
-        // 測謊判定：如果玩家選C（通常是陷阱），或者選的跟真實狀態(wifi/cellular)不符
         if (playerChoice === 'public' || (playerChoice !== realNet)) {
-            // 觸發恐怖震動搖晃通知
             body.classList.add('scary-shake');
-            
             content.innerHTML = `<span class="glitch" style="font-size: 18px;">【⚠️ 警告：你在邪神面前撒了謊】</span>
-            
-            不准騙人！！
-            代碼已經順著電波拆穿了你。你以為隨便點一個選項，就能隱瞞你現實的行蹤嗎？
-            
-            偵測顯示，你當前所使用的網絡節點根本不是你選的那一個。你明明正裸露在無防備的空間裡。
-            
-            邪神的氣息已經順著你真正的網路通路，侵入到你的現實房間了。好自為之。`;
-            
+            不准騙人！！代碼已經順著電波拆穿了你。你以為隨便點一個選項，就能隱瞞你現實的行蹤嗎？\n\n偵測顯示，你當前所使用的網絡節點根本不是你選的那一個。邪神的氣息已經順著網路通路侵入你的現實房間了。`;
             btnBox.innerHTML = `<button class="btn" style="background-color:#600;" onclick="body.classList.remove('scary-shake'); triggerTimeCheck();">【頂著惡寒，進入下一題】</button>`;
         } else {
-            // 誠實通過
-            content.innerHTML = `【審判第一題：驗證通過】
-            
-            很好，你沒有撒謊。
-            因果律代碼確認了你的網絡波長。你的誠實讓你的理智（SAN值）暫時保持穩定。
-            
-            接下來，邪神要定位你當前現實世界所處的時間維度。`;
-            
+            content.innerHTML = `【審判第一題：驗證通過】\n\n很好，你沒有撒謊。因果律代碼確認了你的網絡波長。接下來，邪神要定位你當前現實世界所處的時間維度。`;
             btnBox.innerHTML = `<button class="btn" onclick="triggerTimeCheck()">【進入第二步：時間定位】</button>`;
         }
     }
@@ -153,13 +178,7 @@
         const content = document.getElementById('content-box');
         const btnBox = document.getElementById('btn-box');
 
-        content.innerHTML = `【審判第二題：時空錨定】
-        
-        請在下方輸入你此時此刻，現實世界手錶或手機上顯示的【精確小時】（請輸入 0 到 24 的整數數字）。
-        
-        大乾王朝的時空將與你的現實時間產生重疊……`;
-
-        // 換成輸入框與送出鈕
+        content.innerHTML = `【審判第二題：時空錨定】\n\n請在下方輸入你此時此刻，現實世界手機上顯示的【精確小時】（請輸入 0 到 24 的整數數字）。`;
         btnBox.innerHTML = `
             <input type="number" id="user-time-input" class="time-input" min="0" max="24" placeholder="例如：21">
             <button class="btn" style="text-align:center; background-color:#aa0000;" onclick="verifyTime()">【將時間獻祭給大乾】</button>
@@ -177,65 +196,59 @@
             return;
         }
 
-        // 測謊判定：比對真實小時
         if (inputVal !== realHour) {
             body.classList.add('scary-shake');
-            
             content.innerHTML = `<span class="glitch" style="font-size: 18px;">【⚠️ 警告：時間線扭曲失敗】</span>
-            
-            騙人！！
-            你以為在輸入框裡虛報時間，就能逃過今晚王府的邪神大祭嗎？
-            
-            現在現實世界明明就是 <span class="glitch">${realHour} 點</span>！
-            你刻意隱瞞當下時間的舉動，已經激怒了沉睡在代碼底層的執法厲鬼。
-            
-            時空維度強制更正——
-            現在，強制帶領你的靈魂，切換進入 <span style="color:#fff; font-weight:bold;">[第 ${realHour} 點：陰陽交界]</span> 的王府世界！`;
-            
+            騙人！！現在現實世界明明就是 <span class="glitch">${realHour} 點</span>！\n\n時空維度強制更正——現在，強制帶領你的靈魂，切換進入 <span style="color:#fff; font-weight:bold;">[第 ${realHour} 點：陰陽交界]</span> 的王府世界！`;
             btnBox.innerHTML = `<button class="btn" style="background-color:#600;" onclick="body.classList.remove('scary-shake'); enterMainGame();">【被強制拉入世界……】</button>`;
         } else {
-            // 誠實通過
-            content.innerHTML = `【審判第二題：時空錨定成功】
-            
-            你很誠實。此時此刻確實是現實世界的 ${realHour} 點。
-            
-            大乾王朝的陣西王府大門已成功與你所在的 ${realHour} 點時空產生共振。
-            現實的電量化為陽氣，陰界的大門已在你身後悄然打開……`;
-            
+            content.innerHTML = `【審判第二題：時空錨定成功】\n\n你很誠實。大乾王朝的陣西王府大門已成功與你所在的 ${realHour} 點時空產生共振。`;
             btnBox.innerHTML = `<button class="btn" onclick="enterMainGame()">【正式步入王府深夜】</button>`;
         }
     }
 
-    // ==================== 核心遊戲主體（接續原本的電量與翻轉機制） ====================
     function enterMainGame() {
-        // 顯示狀態列，更新電量
         document.getElementById('status-area').style.display = 'flex';
-        if (navigator.getBattery) {
-            document.getElementById('battery-status').innerText = currentBatteryLevel + "% (與手機同步)";
-        } else {
-            document.getElementById('battery-status').innerText = "66% (法器共鳴)";
-        }
-        
         initBatteryStage();
     }
 
-    // 階段一：展示電量詛咒
+    // ==================== 核心遊戲主體（電量與翻轉機制） ====================
     function initBatteryStage() {
         const content = document.getElementById('content-box');
         const btnBox = document.getElementById('btn-box');
+        if (navigator.getBattery) {
+            document.getElementById('battery-status').innerText = currentBatteryLevel + "% (與手機同步)";
+        }
         
-        content.innerHTML = `你體內湧起一陣寒意。你低頭一看，你（廢柴庶子）在大乾王朝的陽氣此時正是 <span class="glitch">${currentBatteryLevel}%</span>。
-        這正是你現實中那台手機的真實電量。邪神已經將你的現實手機化為「命運法器」，電量若耗盡，你在大乾的靈魂也將油盡燈枯。
+        content.innerHTML = `你體內湧起一陣寒意。你低頭一看，你在大乾王朝的陽氣此時正是 <span class="glitch">${currentBatteryLevel}%</span>（與手機電量同步）。
         
         此時，前方走廊盡頭傳來一聲巨響！一個高達三公尺、長滿眼睛的邪神黑影緩慢凝聚。
         守則第三條在腦海中瘋狂閃爍：
-        『若遇邪神真身，肉眼不可直視。必須五體投地、面朝大地，方可瞞天過海。』
-		<div id="orientationDisplay" style="margin-top:10px; color:#0f0; font-weight:bold;"></div>
-		`;
+        『若遇邪神真身，肉眼不可直視。必須五體投地、面朝大地，方可瞞天過海。』`;
         
+        // 點擊此按鈕時一併請求 iOS 的陀螺儀權限
         btnBox.innerHTML = `
-            <button class="btn" onclick="startFlipRitual()">A. （觸發物理儀式）立刻趴下，將手機螢幕朝下平放！</button>
+            <button class="btn" onclick="requestPermissionAndStart()">A. （觸發物理儀式）立刻趴下，將手機螢幕朝下平放！</button>
         `;
+    }
+
+    // 處理 iOS 權限並啟動儀式
+    function requestPermissionAndStart() {
+        if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+            DeviceOrientationEvent.requestPermission()
+                .then(permissionState => {
+                    if (permissionState === 'granted') {
+                        startFlipRitual();
+                    } else {
+                        alert("遊戲需要動態感應器權限才能驗證你的翻轉動作！");
+                        startFlipRitual(); 
+                    }
+                })
+                .catch(console.error);
+        } else {
+            // Android 或非 iOS 瀏覽器直接進入
+            startFlipRitual();
+        }
     }
 
     // 階段二：觸發物理翻轉儀式
@@ -245,36 +258,41 @@
         document.getElementById('status-area').style.display = 'none';
         document.getElementById('game-title').style.display = 'none';
         
+        // 將 orientationDisplay 正確地建立在這個新畫面裡，才能即時呈現數字！
         container.innerHTML = `
             <div class="glitch" style="font-size: 20px;">【邪神正在俯視長廊】</div>
             <div style="margin-top: 20px; font-size: 15px;">⚠️ 快！請在現實中將手機<br><span style="font-size:24px; color:#fff;">「螢幕朝下」</span>平放在桌上！</div>
             <div style="font-size: 13px; color:#aaa; margin-top:5px;">（正在檢測你的物理動作）</div>
             <div id="countdown">5</div>
+            <div>
+                <div id="orientationDisplay">即時感應數據：等待感應中...</div>
+            </div>
         `;
 
         let timeLeft = 5;
         let isFlippedCorrectly = false;
 
         function handleOrientation(event) {
-            let beta = event.beta; 
-            let gamma = event.gamma;
-            if (beta > 160 || beta < -160 || (Math.abs(beta) < 20 && Math.abs(gamma) > 160)) {
+            let beta = event.beta || 0; 
+            let gamma = event.gamma || 0;
+            
+            // 判定手機螢幕朝下平放
+            if (beta > 150 || beta < -150 || (Math.abs(beta) < 30 && Math.abs(gamma) > 150)) {
                 isFlippedCorrectly = true;
             } else {
                 isFlippedCorrectly = false;
             }
-			 // 即時顯示數字
+
+			// 這裡會精準在倒數畫面上即時更新數據
 			const display = document.getElementById("orientationDisplay");
 			if (display) {
-				display.textContent = `beta: ${beta.toFixed(2)}, gamma: ${gamma.toFixed(2)}, flipped: ${isFlippedCorrectly}`;
+				display.innerHTML = `beta: ${beta.toFixed(1)}° | gamma: ${gamma.toFixed(1)}°<br>成功判定: <span style="color:${isFlippedCorrectly ? '#0f0':'#f00'}; font-weight:bold;">${isFlippedCorrectly}</span>`;
 			}
         }
 		
-        if (window.DeviceOrientationEvent) {
-            window.addEventListener('deviceorientation', handleOrientation);
-        }
+        window.addEventListener('deviceorientation', handleOrientation);
 
-        let ritualTimer = setInterval(() => {
+        ritualTimer = setInterval(() => {
             timeLeft--;
             const countDisplay = document.getElementById('countdown');
             if (countDisplay) countDisplay.innerText = timeLeft;
@@ -282,24 +300,24 @@
             if (timeLeft <= 0) {
                 clearInterval(ritualTimer);
                 window.removeEventListener('deviceorientation', handleOrientation);
-                // 根據有沒有翻轉手機，導向不同結局
+                
+                // 根據最終有沒有翻轉手機，導向不同結局
                 if (isFlippedCorrectly) {
-                    showRitualResult(true); // 成功結局
+                    showRitualResult(true); 
                 } else {
-                    showRitualResult(false); // 失敗結局
+                    showRitualResult(false); 
                 }
             }
         }, 1000);
     }
 
-    // 階段三：儀式結果
-    // 結局渲染（包含成功與死亡）
+    // 階段三：結局渲染
     function showRitualResult(success) {
+        isGameOver = true; // 鎖定結局，不再觸發分頁懲罰
         const container = document.getElementById('main-container');
         container.classList.remove('ritual-screen');
         
         if (success) {
-            // 成功結局
             container.style.backgroundColor = "#111";
             container.style.color = "#c0c0c0";
             container.innerHTML = `
@@ -319,7 +337,6 @@
                 </div>
             `;
         } else {
-            // 💀 失敗結局：直視神明，靈魂抹殺
             container.classList.add('death-screen');
             container.innerHTML = `
                 <h1 style="color:#fff; text-shadow: 0 0 10px #f00;">❌ 【結局：萬目剜魂】</h1>
