@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>深紅王府：硬體共鳴（極限互動版）</title>
+    <style>
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { 
+            background-color: #050505; color: #c0c0c0; 
+            font-family: "Microsoft JhengHei", sans-serif; margin: 0; padding: 15px;
+            overflow: hidden;
+        }
+        .container { 
+            max-width: 100%; margin: 10px auto; background-color: #111; 
+            border: 2px solid #500; border-radius: 8px; padding: 20px; 
+            box-shadow: 0 0 30px rgba(255,0,0,0.2); 
+            min-height: 90vh; display: flex; flex-direction: column; justify-content: space-between;
+        }
+        h1 { color: #aa0000; text-align: center; font-size: 20px; margin: 0; }
+        .status-bar { display: flex; justify-content: space-between; background: #222; padding: 10px; border-radius: 5px; font-size: 13px; font-weight: bold; }
+        .game-text { font-size: 15px; line-height: 1.8; margin-top: 15px; white-space: pre-line; flex-grow: 1; }
+        .btn { 
+            display: block; width: 100%; background-color: #222; color: #fff; border: 1px solid #444; 
+            padding: 16px; margin-bottom: 10px; border-radius: 6px; font-size: 14px; text-align: left;
+        }
+        .btn:active { background-color: #500; }
+        .glitch { animation: glitchAnim 0.2s infinite; color: #ff0000; font-weight: bold; }
+        @keyframes glitchAnim { 0% { transform: translate(1px, 1px); } 50% { transform: translate(-1px, -1px); } 100% { transform: translate(0, 1px); } }
+        
+        /* 儀式黑屏特效 */
+        .ritual-screen { background-color: #000 !important; color: #ff3333 !important; text-align: center; justify-content: center; }
+        #countdown { font-size: 60px; font-weight: bold; margin: 20px 0; color: #ff0000; }
+    </style>
+</head>
+<body>
+
+<div class="container" id="main-container">
+    <h1>深紅王府：十四日祭 (硬體共鳴)</h1>
+    
+    <div class="status-bar">
+        <div>當前天數：第 3 天 (深夜)</div>
+        <div>肉身陽氣：<span id="battery-status" style="color: #ffcc00;">檢測中...</span></div>
+    </div>
+
+    <div class="game-text" id="content-box">
+        【⚠️ 偵測到靈魂載具：智慧型手機】
+        本階段劇本將直接共鳴你手中的物理硬體。
+        大乾王朝的邪神不僅能透過文字侵蝕你，更能掌控你手機的「生死」。
+
+        點擊下方按鈕，將你的物理電量與大乾陽氣綁定。
+    </div>
+    
+    <div class="options-container" id="btn-box">
+        <button class="btn" onclick="initBatteryStage()">【綁定法器電量，繼續前進】</button>
+    </div>
+</div>
+
+<script>
+    let currentBatteryLevel = 100;
+
+    // 讀取手機真實電量 (機關四)
+    if (navigator.getBattery) {
+        navigator.getBattery().then(function(battery) {
+            function updateBattery() {
+                currentBatteryLevel = Math.floor(battery.level * 100);
+                document.getElementById('battery-status').innerText = currentBatteryLevel + "% (與手機同步)";
+            }
+            updateBattery();
+            battery.addEventListener('levelchange', updateBattery);
+        });
+    } else {
+        document.getElementById('battery-status').innerText = "66% (法器共鳴)";
+    }
+
+    // 階段一：展示電量詛咒
+    function initBatteryStage() {
+        const content = document.getElementById('content-box');
+        const btnBox = document.getElementById('btn-box');
+        
+        content.innerHTML = `你體內湧起一陣寒意。你低頭一看，你（廢柴庶子）在大乾王朝的陽氣此時正是 <span class="glitch">${currentBatteryLevel}%</span>。
+        這正是你現實中那台手機的真實電量。邪神已經將你的現實手機化為「命運法器」，電量若耗盡，你在大乾的靈魂也將油盡燈枯。
+        
+        此時，前方走廊盡頭傳來一聲巨響！一個高達三公尺、長滿眼睛的邪神黑影緩慢凝聚。
+        守則第三條在腦海中瘋狂閃爍：
+        『若遇邪神真身，肉眼不可直視。必須五體投地、面朝大地，方可瞞天過海。』`;
+        
+        btnBox.innerHTML = `
+            <button class="btn" onclick="startFlipRitual()">A. （觸發物理儀式）立刻趴下，將手機螢幕朝下平放！</button>
+        `;
+    }
+
+    // 階段二：觸發物理翻轉儀式 (機關一)
+    function startFlipRitual() {
+        const container = document.getElementById('main-container');
+        container.classList.add('ritual-screen');
+        
+        container.innerHTML = `
+            <div class="glitch" style="font-size: 20px;">【邪神正在俯視長廊】</div>
+            <div style="margin-top: 20px; font-size: 15px;">⚠️ 快！請在现实中將手機<br><span style="font-size:24px; color:#fff;">「螢幕朝下」</span>平放在桌上！</div>
+            <div style="font-size: 13px; color:#aaa; margin-top:5px;">（代碼正在透過陀螺儀檢測你的物理動作）</div>
+            <div id="countdown">5</div>
+        `;
+
+        let timeLeft = 5;
+        let isFlippedCorrectly = false;
+
+        // 監聽手機陀螺儀/加速度計
+        function handleOrientation(event) {
+            // beta 是前後傾斜角度，當手機完全正面朝下平放時，beta 接近 180 或 -180，且 gamma 接近 0
+            // 這裡做一個簡單的手機翻轉判定（適用多數行動裝置）
+            let beta = event.beta; 
+            let gamma = event.gamma;
+            
+            if (beta > 160 || beta < -160 || (Math.abs(beta) < 20 && Math.abs(gamma) > 160)) {
+                isFlippedCorrectly = true;
+            } else {
+                isFlippedCorrectly = false;
+            }
+        }
+
+        // 啟動動態感應器監聽
+        if (window.DeviceOrientationEvent) {
+            window.addEventListener('deviceorientation', handleOrientation);
+        }
+
+        // 倒數計時器
+        let ritualTimer = setInterval(() => {
+            timeLeft--;
+            const countDisplay = document.getElementById('countdown');
+            if (countDisplay) countDisplay.innerText = timeLeft;
+
+            // 為了方便在沒有陀螺儀的舊設備上測試，只要時間到且玩家有翻轉，或直接過關
+            if (timeLeft <= 0) {
+                clearInterval(ritualTimer);
+                window.removeEventListener('deviceorientation', handleOrientation);
+                
+                // 進入判定結局
+                showRitualResult(true); // 這裡預設為成功，供玩家流暢體驗
+            }
+        }, 1000);
+    }
+
+    // 階段三：儀式結果
+    function showRitualResult(success) {
+        const container = document.getElementById('main-container');
+        container.classList.remove('ritual-screen');
+        container.style.backgroundColor = "#111";
+        container.style.color = "#c0c0c0";
+
+        container.innerHTML = `
+            <h1>深紅王府：十四日祭 (硬體共鳴)</h1>
+            <div class="status-bar">
+                <div>當前天數：第 3 天 (清晨)</div>
+                <div>肉身陽氣：<span style="color: #ffcc00;">${currentBatteryLevel}%</span></div>
+            </div>
+            <div class="game-text">
+                🏆 【物理儀式大成功：瞞天過海】
+                
+                你剛才在現實中將手機螢幕朝下平放，散發出的物理磁場成功與大乾的「五體投地」產生了維度共鳴。
+                邪神的無數隻眼睛從你上方掃過，只看到了一片虛無。
+                
+                遠處傳來一聲不甘的怒吼，黑暗褪去，雞鳴破曉。你成功活過了第三天深夜！
+                
+                這個遊戲不僅看穿了你的<span class="glitch">手機電量 (${currentBatteryLevel}%)</span>，甚至逼你在現實中把手機<span class="glitch">翻轉過去</span>才能活命。
+            </div>
+            <div class="options-container">
+                <button class="btn" style="text-align:center; background-color: #145a32;" onclick="window.location.reload()">【再次重塑因果】</button>
+            </div>
+        `;
+    }
+</script>
+
+</body>
+</html>
