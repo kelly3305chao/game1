@@ -282,39 +282,64 @@
             if (timeLeft <= 0) {
                 clearInterval(ritualTimer);
                 window.removeEventListener('deviceorientation', handleOrientation);
-                showRitualResult(true); 
+                // 根據有沒有翻轉手機，導向不同結局
+                if (isFlippedCorrectly) {
+                    showRitualResult(true); // 成功結局
+                } else {
+                    showRitualResult(false); // 失敗結局
+                }
             }
         }, 1000);
     }
 
     // 階段三：儀式結果
+    // 結局渲染（包含成功與死亡）
     function showRitualResult(success) {
         const container = document.getElementById('main-container');
         container.classList.remove('ritual-screen');
-        container.style.backgroundColor = "#111";
-        container.style.color = "#c0c0c0";
-
-        container.innerHTML = `
-            <h1>深紅王府：十四日祭 (硬體共鳴)</h1>
-            <div class="status-bar">
-                <div>當前天數：第 3 天 (清晨)</div>
-                <div>肉身陽氣：<span style="color: #ffcc00;">${currentBatteryLevel}%</span></div>
-            </div>
-            <div class="game-text">
-                🏆 【物理儀式大成功：瞞天過海】
-                
-                你剛才在現實中將手機螢幕朝下平放，散發出的物理磁場成功與大乾的「五體投地」產生了維度共鳴。
-                邪神的無數隻眼睛從你上方掃過，只看到了一片虛無。
-                
-                遠處傳來一聲不甘的怒吼，黑暗褪去，雞鳴破曉。你成功活過了第三天深夜！
-                
-                本輪回體驗結束。
-                網頁成功拆穿了你的<span class="glitch">網路偽裝</span>、看穿了你的<span class="glitch">現實時間</span>，並同步了你的<span class="glitch">手機電量 (${currentBatteryLevel}%)</span>。這就是打破第四面牆的極致互動！
-            </div>
-            <div class="options-container">
-                <button class="btn" style="text-align:center; background-color: #145a32;" onclick="window.location.reload()">【重置因果，再次挑戰】</button>
-            </div>
-        `;
+        
+        if (success) {
+            // 成功結局
+            container.style.backgroundColor = "#111";
+            container.style.color = "#c0c0c0";
+            container.innerHTML = `
+                <h1>深紅王府：十四日祭 (大成功)</h1>
+                <div class="status-bar">
+                    <div>當前天數：第 3 天 (清晨)</div>
+                    <div>肉身陽氣：<span style="color: #ffcc00;">${currentBatteryLevel}%</span></div>
+                </div>
+                <div class="game-text">
+                    🏆 【物理儀式大成功：瞞天過海】\n
+                    你剛才在現實中將手機螢幕朝下平放，散發出的物理磁場成功與大乾的「五體投地」產生了維度共鳴。
+                    邪神的千萬隻眼睛從你上方掃過，只看到了一片虛無。\n
+                    遠處傳來一聲不甘的怒吼，黑暗褪去，雞鳴破曉。你成功活過了第三天深夜！
+                </div>
+                <div class="options-container">
+                    <button class="btn" style="text-align:center; background-color: #145a32;" onclick="window.location.reload()">【重置因果，再次挑戰】</button>
+                </div>
+            `;
+        } else {
+            // 💀 失敗結局：直視神明，靈魂抹殺
+            container.classList.add('death-screen');
+            container.innerHTML = `
+                <h1 style="color:#fff; text-shadow: 0 0 10px #f00;">❌ 【結局：萬目剜魂】</h1>
+                <div class="game-text" style="color:#fff; margin-top:20px;">
+                    你終究沒有趴下，也沒有翻轉你的手機。
+                    你站在長廊中央，心存僥倖地死死盯著螢幕。
+                    
+                    倒數結束的那一秒，邪神身上的千萬隻眼睛同時睜開，隔著玻璃螢幕，與你的雙眼精準對視。
+                    
+                    【你直視了神明。】
+                    
+                    一陣無法言喻的劇痛從你現實的眼球炸開。你看到手機螢幕滲出了黑色的鮮血，隨後是你握著手機的雙手開始乾枯、碳化……
+                    
+                    大乾王朝的鎮西王府，今晚又多了一具死因不明的庶子乾屍。而你在現實世界的手機，電量瞬間歸零。
+                </div>
+                <div class="options-container">
+                    <button class="btn" style="text-align:center; background-color: #f00; color:#000; font-weight:bold;" onclick="window.location.reload()">【將靈魂留在大乾，重新輪迴】</button>
+                </div>
+            `;
+        }
     }
 </script>
 
