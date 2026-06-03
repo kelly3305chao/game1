@@ -56,31 +56,48 @@
     </p>
 
     <script>
+        let lastTime = performance.now();
+        let frameTimes = [];
         const secretEl = document.getElementById('secret-core');
-        let frameCount = 0;
+        let toggle = false;
 
-        // 這個函式會隨著手機螢幕的每一次刷新（Refresh）執行一次
-        function updateTimeline() {
-            frameCount++;
+        function checkFPS(now) {
+            // 計算兩幀之間的時間差 (毫秒)
+            const delta = now - lastTime;
+            lastTime = now;
 
-            // 核心魔術：利用畫面的格數（Frame）做切換
-            // 每 2 格切換一次狀態
-            if (frameCount % 2 === 0) {
-                // 狀態 A：顯示真正的密碼，並用顯眼的螢光綠
+            // 收集最近的幀率數據
+            if (delta > 0) {
+                frameTimes.push(1000 / delta);
+                if (frameTimes.length > 10) frameTimes.shift();
+            }
+
+            // 計算平均 FPS
+            const avgFPS = frameTimes.reduce((a, b) => a + b, 0) / frameTimes.length;
+
+            // --- 核心邏輯變更 ---
+            // 如果偵測到平均 FPS 低於 75（代表成功降到 60Hz 或以下）
+            if (avgFPS > 10 && avgFPS < 75) {
+                // 解謎成功：停止閃爍，直接定格顯示密碼！
                 secretEl.innerText = "OPEN";
                 secretEl.style.color = "#00ffcc";
             } else {
-                // 狀態 B：顯示干擾字，並用一模一樣的顏色
-                secretEl.innerText = "X X X";
-                secretEl.style.color = "#00ffcc";
+                // 平時 120Hz 狀態：讓它瘋狂高速閃爍，融合成亂碼
+                toggle = !toggle;
+                if (toggle) {
+                    secretEl.innerText = "OPEN";
+                    secretEl.style.color = "#00ffcc";
+                } else {
+                    secretEl.innerText = "X X X";
+                    secretEl.style.color = "#00ffcc";
+                }
             }
 
-            // 不斷循環執行
-            requestAnimationFrame(updateTimeline);
+            requestAnimationFrame(checkFPS);
         }
 
-        // 啟動動畫
-        requestAnimationFrame(updateTimeline);
+        // 啟動偵測
+        requestAnimationFrame(checkFPS);
     </script>
 
 </body>
