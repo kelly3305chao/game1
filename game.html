@@ -77,13 +77,31 @@
     let isGameOver = false; // 用來標記是否已經進入結局，防止重複觸發分頁懲罰
     let ritualTimer = null;
 
-    // 全域監聽：任何時間只要跳出分頁或切換畫面，回來直接進分頁觸殺結局
+    // 1. 標準分頁狀態監聽
     document.addEventListener('visibilitychange', () => {
-        if (document.hidden && !isGameOver) {
-            // 玩家在遊戲進行中切走了！
+        if (document.hidden) handlePlayerEscape();
+    });
+
+    // 2. 手機瀏覽器滑掉、切 App 核心監聽 (Safari / LINE 特別有效)
+    window.addEventListener('pagehide', handlePlayerEscape);
+    window.addEventListener('blur', handlePlayerEscape);
+
+    // 3. 系統凍結時間差測謊 (預防手機背景直接凍結 JavaScript)
+    let lastHeartbeat = Date.now();
+    setInterval(() => {
+        let currentTime = Date.now();
+        // 如果兩次定時器執行的間隔大於 1.5 秒 (正常是 0.5 秒)，說明手機網頁剛剛被系統凍結了
+        if (currentTime - lastHeartbeat > 1500) {
+            handlePlayerEscape();
+        }
+        lastHeartbeat = currentTime;
+    }, 500);
+
+    function handlePlayerEscape() {
+        if (!isGameOver) {
             triggerTabEscapePunishment();
         }
-    });
+    }
 
     // 讀取真實電量
     if (navigator.getBattery) {
