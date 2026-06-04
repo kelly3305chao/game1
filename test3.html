@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🌫️ 霧中探索 🌫️</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            background-color: #050505;
+            color: #c0c0c0;
+            font-family: "Microsoft JhengHei", sans-serif;
+            text-align: center;
+            padding: 20px;
+            margin: 0;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        h1 {
+            color: #aabbff;
+            font-size: 24px;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(170, 187, 255, 0.5);
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+        
+        .status-box {
+            background: #111;
+            border: 2px solid #333;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px auto;
+            max-width: 300px;
+        }
+        
+        .label {
+            color: #666;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+        
+        .value {
+            font-size: 36px;
+            font-weight: bold;
+            font-family: monospace;
+        }
+        
+        .shake-indicator {
+            font-size: 48px;
+            margin: 20px 0;
+            height: 60px;
+        }
+        
+        .shaking {
+            color: #ff6b6b;
+            animation: shakeAnim 0.1s infinite;
+        }
+        
+        .idle {
+            color: #666;
+        }
+        
+        .stable {
+            color: #aabbff;
+        }
+        
+        @keyframes shakeAnim {
+            0% { transform: translate(2px, 2px); }
+            50% { transform: translate(-2px, -2px); }
+            100% { transform: translate(1px, -1px); }
+        }
+        
+        .instruction {
+            background: #222;
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 30px auto;
+            max-width: 300px;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        
+        .instruction-title {
+            color: #aabbff;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .success-msg {
+            color: #aabbff;
+            font-size: 24px;
+            font-weight: bold;
+            animation: glow 1s infinite;
+            display: none;
+        }
+        
+        @keyframes glow {
+            0%, 100% { text-shadow: 0 0 10px #aabbff; }
+            50% { text-shadow: 0 0 30px #aabbff, 0 0 50px #aabbff; }
+        }
+        
+        .fog-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 100;
+            transition: opacity 1s ease-out;
+        }
+        
+        .fog-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(ellipse at center, 
+                rgba(20, 25, 40, 0.95) 0%,
+                rgba(10, 15, 25, 0.98) 50%,
+                rgba(5, 10, 20, 1) 100%);
+            opacity: 1;
+        }
+        
+        .fog-particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            overflow: hidden;
+        }
+        
+        .fog-particle {
+            position: absolute;
+            background: radial-gradient(circle, rgba(200, 210, 230, 0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: float 8s infinite ease-in-out;
+        }
+        
+        .fog-particle:nth-child(1) { width: 200px; height: 200px; top: 10%; left: 10%; animation-delay: 0s; }
+        .fog-particle:nth-child(2) { width: 300px; height: 300px; top: 30%; left: 50%; animation-delay: 1s; }
+        .fog-particle:nth-child(3) { width: 250px; height: 250px; top: 60%; left: 20%; animation-delay: 2s; }
+        .fog-particle:nth-child(4) { width: 180px; height: 180px; top: 70%; left: 70%; animation-delay: 3s; }
+        .fog-particle:nth-child(5) { width: 220px; height: 220px; top: 20%; left: 60%; animation-delay: 4s; }
+        .fog-particle:nth-child(6) { width: 280px; height: 280px; top: 50%; left: 30%; animation-delay: 5s; }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0) translateX(0); }
+            25% { transform: translateY(-20px) translateX(10px); }
+            50% { transform: translateY(-10px) translateX(-10px); }
+            75% { transform: translateY(-25px) translateX(5px); }
+        }
+        
+        .fog-clear-animation {
+            animation: clearFog 2s forwards;
+        }
+        
+        @keyframes clearFog {
+            0% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+        
+        .clear-progress {
+            margin-top: 20px;
+            padding: 15px;
+            background: #111;
+            border: 2px solid #333;
+            border-radius: 10px;
+            max-width: 300px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .progress-bar {
+            height: 20px;
+            background: #222;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #6677aa, #aabbff);
+            border-radius: 10px;
+            transition: width 0.3s;
+        }
+        
+        .hint-text {
+            color: #6677aa;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    
+    <h1>🌫️ 霧中探索 🌫️</h1>
+    <p class="subtitle">搖晃手機散去迷霧</p>
+    
+    <!-- 搖晃狀態指示 -->
+    <div class="status-box">
+        <div class="label">當前狀態</div>
+        <div class="shake-indicator" id="shake-status">等待搖晃...</div>
+        
+        <div class="label" style="margin-top: 20px;">
+            X: <span id="x-val" style="color:#ff6b6b;">0</span> | 
+            Y: <span id="y-val" style="color:#6bff6b;">0</span> | 
+            Z: <span id="z-val" style="color:#6b6bff;">0</span>
+        </div>
+        
+        <div class="label" style="margin-top: 10px;">
+            加速度總量: <span id="total-accel" style="color:#fff;">0</span>
+        </div>
+    </div>
+    
+    <!-- 清除進度 -->
+    <div class="clear-progress">
+        <div class="label">迷霧清除進度</div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill" style="width: 0%;"></div>
+        </div>
+        <div class="hint-text">搖晃 <span id="shake-needed">15</span> 次清除迷霧</div>
+    </div>
+    
+    <!-- 操作說明 -->
+    <div class="instruction" id="instruction">
+        <div class="instruction-title">📱 搖晃說明</div>
+        1. 用手握住手機<br>
+        2. 快速搖晃手機<br>
+        3. 每次搖晃都會減少迷霧<br>
+        4. 湊齐���数即可看清画面
+    </div>
+    
+    <!-- 成功訊息 -->
+    <div class="success-msg" id="success-msg">
+        ✨ 迷霧已散去！
+    </div>
+    
+    <!-- 迷霧層 -->
+    <div class="fog-container" id="fog-container">
+        <div class="fog-layer" id="fog-layer"></div>
+        <div class="fog-particles">
+            <div class="fog-particle"></div>
+            <div class="fog-particle"></div>
+            <div class="fog-particle"></div>
+            <div class="fog-particle"></div>
+            <div class="fog-particle"></div>
+            <div class="fog-particle"></div>
+        </div>
+    </div>
+    
+    <script>
+        // ========== 搖晃感應系統 ==========
+        let lastX = 0, lastY = 0, lastZ = 0;
+        let shakeCount = 0;
+        let isShaking = false;
+        let gameStarted = false;
+        let isCleared = false;
+        
+        // 需要搖晃的次數
+        const SHAKES_NEEDED = 15;
+        const SHAKE_THRESHOLD = 15;
+        
+        // 元素
+        const xVal = document.getElementById('x-val');
+        const yVal = document.getElementById('y-val');
+        const zVal = document.getElementById('z-val');
+        const totalAccel = document.getElementById('total-accel');
+        const shakeStatus = document.getElementById('shake-status');
+        const progressFill = document.getElementById('progress-fill');
+        const shakeNeeded = document.getElementById('shake-needed');
+        const instruction = document.getElementById('instruction');
+        const successMsg = document.getElementById('success-msg');
+        const fogContainer = document.getElementById('fog-container');
+        const fogLayer = document.getElementById('fog-layer');
+        
+        // 開始遊戲
+        function startGame() {
+            gameStarted = true;
+            shakeNeeded.innerText = SHAKES_NEEDED - shakeCount;
+            instruction.innerHTML = '<div class="instruction-title">📱 搖晃中...</div>請用力搖晃手機！<br><br>每一次搖晃都會減少迷霧';
+        }
+        
+        // 處理移動感應
+        function handleMotion(event) {
+            let accel = event.accelerationIncludingGravity;
+            
+            if (!accel) {
+                accel = { x: 0, y: 0, z: 0 };
+            }
+            
+            const x = accel.x || 0;
+            const y = accel.y || 0;
+            const z = accel.z || 0;
+            
+            // 更新顯示
+            xVal.innerText = x.toFixed(1);
+            yVal.innerText = y.toFixed(1);
+            zVal.innerText = z.toFixed(1);
+            
+            // 計算加速度總量
+            const total = Math.sqrt(x*x + y*y + z*z);
+            totalAccel.innerText = total.toFixed(1);
+            
+            // 判斷是否搖晃
+            if (total > SHAKE_THRESHOLD) {
+                if (!isShaking && gameStarted) {
+                    // 開始搖晃
+                    isShaking = true;
+                    shakeStatus.innerText = '⚠️ 搖晃中！';
+                    shakeStatus.className = 'shake-indicator shaking';
+                    
+                    // 增加搖晃計數
+                    shakeCount++;
+                    updateProgress();
+                    
+                    if (!isCleared && shakeCount >= SHAKES_NEEDED) {
+                        clearFog();
+                    }
+                }
+            } else {
+                if (isShaking) {
+                    // 停止搖晃
+                    isShaking = false;
+                    shakeStatus.innerText = '✓ 穩定';
+                    shakeStatus.className = 'shake-indicator stable';
+                }
+            }
+            
+            // 記錄這次的加速度供下一次比較
+            lastX = x;
+            lastY = y;
+            lastZ = z;
+        }
+        
+        // 更新進度
+        function updateProgress() {
+            const percentage = Math.min((shakeCount / SHAKES_NEEDED) * 100, 100);
+            progressFill.style.width = percentage + '%';
+            shakeNeeded.innerText = Math.max(SHAKES_NEEDED - shakeCount, 0);
+        }
+        
+        // 清除迷霧
+        function clearFog() {
+            isCleared = true;
+            fogLayer.classList.add('fog-clear-animation');
+            
+            // 延遲隱藏整個容器
+            setTimeout(() => {
+                fogContainer.style.opacity = '0';
+            }, 1500);
+            
+            // 顯示成功訊息
+            setTimeout(() => {
+                successMsg.style.display = 'block';
+                instruction.innerHTML = '<div class="instruction-title">✨ 成功！</div>迷霧已完全散去！';
+            }, 2000);
+        }
+        
+        // 請求權限並啟動感應器
+        function initAccelerometer() {
+            if (typeof DeviceMotionEvent !== 'undefined') {
+                if (typeof DeviceMotionEvent.requestPermission === 'function') {
+                    DeviceMotionEvent.requestPermission()
+                        .then(permissionState => {
+                            if (permissionState === 'granted') {
+                                window.addEventListener('devicemotion', handleMotion);
+                                startGame();
+                            } else {
+                                alert('需要加速器權限才能玩這個遊戲');
+                            }
+                        })
+                        .catch(err => {
+                            console.error(err);
+                        });
+                } else {
+                    window.addEventListener('devicemotion', handleMotion);
+                    startGame();
+                }
+            } else {
+                alert('您的設備不支持加速器');
+            }
+        }
+        
+        // 第一次點擊後啟動
+        document.body.addEventListener('click', function initOnce() {
+            initAccelerometer();
+            document.body.removeEventListener('click', initOnce);
+        }, { once: true });
+        
+        // 電腦模擬模式（使用空格鍵或點擊模擬搖晃）
+        let simShakeCount = 0;
+        document.addEventListener('keydown', function(e) {
+            if (e.code === 'Space' && !isCleared && gameStarted) {
+                e.preventDefault();
+                simShakeCount++;
+                shakeCount = simShakeCount;
+                shakeStatus.innerText = '⚠️ 搖晃中！';
+                shakeStatus.className = 'shake-indicator shaking';
+                updateProgress();
+                
+                if (simShakeCount >= SHAKES_NEEDED) {
+                    clearFog();
+                }
+            }
+        });
+        
+        // 點擊也可以觸發搖晃（電腦測試用）
+        document.addEventListener('mousedown', function(e) {
+            if (!isCleared && gameStarted && e.target.tagName !== 'BUTTON') {
+                simShakeCount++;
+                shakeCount = simShakeCount;
+                if (shakeStatus.className.indexOf('shaking') === -1) {
+                    shakeStatus.innerText = '⚠️ 搖晃中！';
+                    shakeStatus.className = 'shake-indicator shaking';
+                }
+                updateProgress();
+                
+                if (simShakeCount >= SHAKES_NEEDED) {
+                    clearFog();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
