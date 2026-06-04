@@ -2,103 +2,341 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-select=no">
-    <title>⚡ 時空流速機關 ⚡</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>⚡ 搖晃訓練場 ⚡</title>
     <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
         body {
             background-color: #050505;
-            color: #e0e0e0;
-            font-family: sans-serif;
+            color: #c0c0c0;
+            font-family: "Microsoft JhengHei", sans-serif;
             text-align: center;
-            padding: 40px 20px;
+            padding: 20px;
+            margin: 0;
+            min-height: 100vh;
+            overflow-x: hidden;
         }
-        .container {
-            margin: 50px auto;
-            width: 280px;
-            height: 280px;
+        
+        h1 {
+            color: #00ffcc;
+            font-size: 24px;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(0, 255, 200, 0.5);
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+        
+        .status-box {
             background: #111;
             border: 2px solid #333;
-            border-radius: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            box-shadow: 0 0 20px rgba(0,255,200,0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px auto;
+            max-width: 300px;
         }
-        /* 核心謎題字體 */
-        #secret-core {
-            font-size: 48px;
+        
+        .label {
+            color: #666;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+        
+        .value {
+            font-size: 36px;
             font-weight: bold;
-            letter-spacing: 5px;
-            transition: color 0.1s;
+            font-family: monospace;
         }
-        .hint {
-            color: #888;
-            font-size: 14px;
+        
+        .shake-indicator {
+            font-size: 48px;
+            margin: 20px 0;
+            height: 60px;
+        }
+        
+        .shaking {
+            color: #ff6b6b;
+            animation: shakeAnim 0.1s infinite;
+        }
+        
+        .idle {
+            color: #666;
+        }
+        
+        .stable {
+            color: #00ffcc;
+        }
+        
+        @keyframes shakeAnim {
+            0% { transform: translate(2px, 2px); }
+            50% { transform: translate(-2px, -2px); }
+            100% { transform: translate(1px, -1px); }
+        }
+        
+        .log-box {
+            background: #0a0a0a;
+            border: 1px solid #222;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 20px auto;
+            max-width: 300px;
+            height: 150px;
+            overflow-y: auto;
+            text-align: left;
+            font-family: monospace;
+            font-size: 11px;
+            color: #444;
+        }
+        
+        .log-entry {
+            margin: 2px 0;
+        }
+        
+        .log-shake {
+            color: #ff6b6b;
+        }
+        
+        .log-stable {
+            color: #00ffcc;
+        }
+        
+        .cloud-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(180deg, #1a1a2a, #0a0a15);
+            z-index: -1;
+            transition: opacity 2s ease;
+            opacity: 0;
+        }
+        
+        .cloud-layer.visible {
+            opacity: 1;
+        }
+        
+        .instruction {
+            background: #222;
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 30px auto;
+            max-width: 300px;
+            font-size: 13px;
             line-height: 1.6;
+        }
+        
+        .instruction-title {
+            color: #00ffcc;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .success-msg {
+            color: #00ffcc;
+            font-size: 24px;
+            font-weight: bold;
+            animation: glow 1s infinite;
+            display: none;
+        }
+        
+        @keyframes glow {
+            0%, 100% { text-shadow: 0 0 10px #00ffcc; }
+            50% { text-shadow: 0 0 30px #00ffcc, 0 0 50px #00ffcc; }
         }
     </style>
 </head>
 <body>
-
-    <h2>⏳ 扭曲的時空矩陣 </h2>
-    <p class="hint">
-        「這裡的流速太快了，肉眼無法捕捉。<br>
-        唯有讓你的核心**進入低能耗狀態**，時空才會慢下來...」
-    </p>
-
-    <div class="container">
-        <div id="secret-core">WAIT</div>
+    
+    <h1>⚡ 搖晃感應訓練場 ⚡</h1>
+    <p class="subtitle">用於測試搖晃手機時的數值變化</p>
+    
+    <!-- 搖晃狀態指示 -->
+    <div class="status-box">
+        <div class="label">當前狀態</div>
+        <div class="shake-indicator" id="shake-status">等待搖晃...</div>
+        
+        <div class="label" style="margin-top: 20px;">
+            X: <span id="x-val" style="color:#ff6b6b;">0</span> | 
+            Y: <span id="y-val" style="color:#6bff6b;">0</span> | 
+            Z: <span id="z-val" style="color:#6b6bff;">0</span>
+        </div>
+        
+        <div class="label" style="margin-top: 10px;">
+            加速度總量: <span id="total-accel" style="color:#fff;">0</span>
+        </div>
+        
+        <div class="label" style="margin-top: 10px;">
+            搖晃次數: <span id="shake-count" style="color:#00ffcc;">0</span>
+        </div>
     </div>
-
-    <p class="hint" style="margin-top: 30px;">
-        💡 提示：試著滑開手機控制中心，**開啟「省電模式」**（低電量模式）再回來看看。
-    </p>
-
+    
+    <!-- 操作說明 -->
+    <div class="instruction">
+        <div class="instruction-title">📱 搖晃訓練說明</div>
+        1. 用手握住手機<br>
+        2. 快速前后/左右摇晃手机<br>
+        3. 观察數值變化<br>
+        4. 当數值超过阈值時，画面會顯示「搖晃中」
+    </div>
+    
+    <!-- 成功訊息 -->
+    <div class="success-msg" id="success-msg">
+        🌫️ 雲霧已散開！
+    </div>
+    
+    <!-- 即時數值日誌 -->
+    <div class="log-box" id="log-box">
+        <div class="log-entry log-stable">[系統] 搖晃感應器已啟動</div>
+    </div>
+    
+    <!-- 雲層效果 -->
+    <div class="cloud-layer" id="cloud-layer"></div>
+    
     <script>
-        let lastTime = performance.now();
-        let frameTimes = [];
-        const secretEl = document.getElementById('secret-core');
-        let toggle = false;
-
-        function checkFPS(now) {
-            // 計算兩幀之間的時間差 (毫秒)
-            const delta = now - lastTime;
-            lastTime = now;
-
-            // 收集最近的幀率數據
-            if (delta > 0) {
-                frameTimes.push(1000 / delta);
-                if (frameTimes.length > 10) frameTimes.shift();
+        // ========== 搖晃感應系統 ==========
+        let lastX = 0, lastY = 0, lastZ = 0;
+        let shakeCount = 0;
+        let isShaking = false;
+        
+        // 加速度閾值
+        const SHAKE_THRESHOLD = 15;
+        
+        // 元素
+        const xVal = document.getElementById('x-val');
+        const yVal = document.getElementById('y-val');
+        const zVal = document.getElementById('z-val');
+        const totalAccel = document.getElementById('total-accel');
+        const shakeStatus = document.getElementById('shake-status');
+        const shakeCountEl = document.getElementById('shake-count');
+        const logBox = document.getElementById('log-box');
+        const cloudLayer = document.getElementById('cloud-layer');
+        const successMsg = document.getElementById('success-msg');
+        
+        function addLog(message, type) {
+            const entry = document.createElement('div');
+            entry.className = 'log-entry ' + (type === 'shake' ? 'log-shake' : 'log-stable');
+            entry.innerText = message;
+            logBox.insertBefore(entry, logBox.firstChild);
+            
+            // 限制顯示數量
+            while (logBox.children.length > 20) {
+                logBox.removeChild(logBox.lastChild);
             }
-
-            // 計算平均 FPS
-            const avgFPS = frameTimes.reduce((a, b) => a + b, 0) / frameTimes.length;
-
-            // --- 核心邏輯變更 ---
-            // 如果偵測到平均 FPS 低於 75（代表成功降到 60Hz 或以下）
-            if (avgFPS > 10 && avgFPS < 75) {
-                // 解謎成功：停止閃爍，直接定格顯示密碼！
-                secretEl.innerText = "OPEN";
-                secretEl.style.color = "#00ffcc";
+        }
+        
+        function handleMotion(event) {
+            // 獲取加速度數據
+            let accel = event.accelerationIncludingGravity;
+            
+            if (!accel) {
+                accel = { x: 0, y: 0, z: 0 };
+            }
+            
+            const x = accel.x || 0;
+            const y = accel.y || 0;
+            const z = accel.z || 0;
+            
+            // 更新顯示
+            xVal.innerText = x.toFixed(1);
+            yVal.innerText = y.toFixed(1);
+            zVal.innerText = z.toFixed(1);
+            
+            // 計算加速度總量
+            const total = Math.sqrt(x*x + y*y + z*z);
+            totalAccel.innerText = total.toFixed(1);
+            
+            // 計算與上一次的变化
+            const delta = Math.abs(x - lastX) + Math.abs(y - lastY) + Math.abs(z - lastZ);
+            
+            // 判斷是否搖晃
+            if (total > SHAKE_THRESHOLD) {
+                if (!isShaking) {
+                    // 開始搖晃
+                    isShaking = true;
+                    shakeStatus.innerText = '⚠️ 搖晃中！';
+                    shakeStatus.className = 'shake-indicator shaking';
+                    shakeCount++;
+                    shakeCountEl.innerText = shakeCount;
+                    addLog(`[搖晃] x=${x.toFixed(1)} y=${y.toFixed(1)} z=${z.toFixed(1)} total=${total.toFixed(1)}`, 'shake');
+                    
+                    // 雲層效果
+                    cloudLayer.classList.add('visible');
+                }
             } else {
-                // 平時 120Hz 狀態：讓它瘋狂高速閃爍，融合成亂碼
-                toggle = !toggle;
-                if (toggle) {
-                    secretEl.innerText = "OPEN";
-                    secretEl.style.color = "#00ffcc";
-                } else {
-                    secretEl.innerText = "X X X";
-                    secretEl.style.color = "#00ffcc";
+                if (isShaking) {
+                    // 停止搖晃
+                    isShaking = false;
+                    shakeStatus.innerText = '✓ 穩定';
+                    shakeStatus.className = 'shake-indicator stable';
+                    addLog('[穩定] 搖晃結束', 'stable');
+                    
+                    // 雲層消散
+                    setTimeout(() => {
+                        cloudLayer.classList.remove('visible');
+                    }, 500);
                 }
             }
-
-            requestAnimationFrame(checkFPS);
+            
+            // 記錄這次的加速度供下一次比較
+            lastX = x;
+            lastY = y;
+            lastZ = z;
         }
-
-        // 啟動偵測
-        requestAnimationFrame(checkFPS);
+        
+        // 請求權限並啟動感應器
+        function initAccelerometer() {
+            // 檢查 是否支持 DeviceMotion
+            if (typeof DeviceMotionEvent !== 'undefined') {
+                // iOS 13+ 需要請求權限
+                if (typeof DeviceMotionEvent.requestPermission === 'function') {
+                    DeviceMotionEvent.requestPermission()
+                        .then(permissionState => {
+                            if (permissionState === 'granted') {
+                                window.addEventListener('devicemotion', handleMotion);
+                                addLog('[系統] 加速器權限已授予', 'stable');
+                            } else {
+                                addLog('[錯誤] 加速器權限被拒絕', 'stable');
+                            }
+                        })
+                        .catch(err => {
+                            console.error(err);
+                            addLog('[錯誤] ' + err.message, 'stable');
+                        });
+                } else {
+                    // 非 iOS 設備直接啟動
+                    window.addEventListener('devicemotion', handleMotion);
+                    addLog('[系統] 加速器已啟動（非iOS）', 'stable');
+                }
+            } else {
+                addLog('[錯誤] 您的設備不支持加速器', 'stable');
+                shakeStatus.innerText = '❌ 不支持加速器';
+                shakeStatus.className = 'shake-indicator';
+            }
+        }
+        
+        // 自動請求權限（用戶首次點擊後）
+        function requestAndStart() {
+            initAccelerometer();
+            document.querySelector('.instruction').innerHTML = '<div class="instruction-title">📱 訓練進行中</div>搖晃手機，觀察數值變化！<br><br>雲層效果 = 搖晃時顯現';
+        }
+        
+        // 初始化
+        document.body.addEventListener('click', function initOnce() {
+            requestAndStart();
+            document.body.removeEventListener('click', initOnce);
+        }, { once: true });
+        
+        // 開始時添加初始日誌
+        addLog('[系統] 點擊畫面���動���速器', 'stable');
     </script>
-
 </body>
 </html>
